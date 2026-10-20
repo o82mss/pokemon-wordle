@@ -14,9 +14,9 @@
             flex-direction: column;
             align-items: center;
             margin: 0;
-            padding: 8px 4px;
+            padding: 10px 5px;
         }
-        h1 { font-size: 1.2rem; color: #333; margin: 0 0 6px 0; }
+        h1 { font-size: 1.3rem; color: #333; margin: 0 0 6px 0; }
 
         /* ロビー・設定 */
         #lobby-area {
@@ -78,14 +78,14 @@
             gap: 6px;
         }
         #turn-indicator {
-            font-size: 1.05rem;
+            font-size: 1.1rem;
             font-weight: bold;
             color: #28a745;
         }
         #score-board {
             display: flex;
-            gap: 6px;
-            font-size: 0.8rem;
+            gap: 10px;
+            font-size: 0.85rem;
             color: #444;
             flex-wrap: wrap;
             justify-content: center;
@@ -102,36 +102,34 @@
             font-weight: bold;
         }
 
-        /* ボード (6行×2列・レスポンシブ対応) */
+        /* ボード (6行×2列) */
         #boards-container {
             display: flex;
             justify-content: center;
             gap: clamp(4px, 1.5vw, 10px);
-            width: 90%;
+            width: 100%;
             max-width: 480px;
             margin-bottom: 8px;
         }
         .board-column {
             display: grid;
             grid-template-rows: repeat(6, 1fr);
-            gap: clamp(2px, 1vw, 4px);
-            flex: 1;
-            max-width: 230px;
+            gap: 4px;
         }
         .row {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: clamp(2px, 1vw, 4px);
-            width: 100%;
+            gap: 4px;
+            position: relative;
         }
         .tile {
-            width: 100%;
-            aspect-ratio: 1 / 1; /* 正方形を維持 */
+            width: 36px;
+            height: 36px;
             border: 2px solid #d3d6da;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: clamp(0.8rem, 3.8vw, 1.0rem);
+            font-size: 1.0rem;
             font-weight: bold;
             background-color: #fff;
             border-radius: 4px;
@@ -173,7 +171,7 @@
         .key {
             direction: ltr;
             height: 34px;
-            min-width: 27px;
+            min-width: 28px;
             padding: 2px;
             font-size: 0.85rem;
             font-weight: bold;
@@ -334,3 +332,469 @@
                 <div class="key empty"></div>
             </div>
         </div>
+    </div>
+
+    <script>
+        const POKEMON_LIST = [
+                "フシギダネ", "フシギソウ", "フシギバナ", "リザードン", "カメックス",
+                "キャタピー", "トランセル", "バタフリー", "ピジョット", "オニスズメ",
+                "オニドリル", "アーボック", "ピカチュウ", "ライチュウ", "サンドパン",
+                "ニドラン♀", "ニドリーナ", "ニドクイン", "ニドラン♂", "ニドリーノ",
+                "ニドキング", "キュウコン", "ゴルバット", "ナゾノクサ", "クサイハナ",
+                "ラフレシア", "パラセクト", "モルフォン", "ダグトリオ", "ペルシアン",
+                "ゴルダック", "オコリザル", "ウインディ", "ニョロボン", "ユンゲラー",
+                "フーディン", "ワンリキー", "ゴーリキー", "カイリキー", "マダツボミ",
+                "ウツボット", "メノクラゲ", "ドククラゲ", "イシツブテ", "ゴローニャ",
+                "ギャロップ", "レアコイル", "ドードリオ", "ベトベター", "ベトベトン",
+                "シェルダー", "パルシェン", "スリーパー", "キングラー", "ビリリダマ",
+                "マルマイン", "サワムラー", "エビワラー", "ベロリンガ", "マタドガス",
+                "サイホーン", "モンジャラ", "トサキント", "アズマオウ", "ヒトデマン",
+                "スターミー", "バリヤード", "ストライク", "ルージュラ", "ケンタロス",
+                "コイキング", "ギャラドス", "シャワーズ", "サンダース", "ブースター",
+                "オムナイト", "オムスター", "カブトプス", "フリーザー", "ファイヤー",
+                "ミニリュウ", "ハクリュー", "カイリュー", "ミュウツー", "チコリータ",
+                "ベイリーフ", "メガニウム", "ヒノアラシ", "マグマラシ", "バクフーン",
+                "アリゲイツ", "オーダイル", "ヨルノズク", "レディアン", "アリアドス",
+                "クロバット", "チョンチー", "ランターン", "トゲチック", "ネイティオ",
+                "デンリュウ", "キレイハナ", "ウソッキー", "ニョロトノ", "ヒマナッツ",
+                "ヤンヤンマ", "ブラッキー", "ヤミカラス", "ヤドキング", "アンノーン",
+                "ソーナンス", "キリンリキ", "クヌギダマ", "フォレトス", "グライガー",
+                "ハガネール", "グランブル", "ハリーセン", "ヘラクロス", "マグマッグ",
+                "マグカルゴ", "テッポウオ", "デリバード", "マンタイン", "エアームド",
+                "キングドラ", "ドンファン", "ポリゴン２", "カポエラー", "ムチュール",
+                "エレキッド", "ミルタンク", "ヨーギラス", "サナギラス", "バンギラス",
+                "ジュプトル", "ジュカイン", "ワカシャモ", "バシャーモ", "ミズゴロウ",
+                "ヌマクロー", "ラグラージ", "ジグザグマ", "マッスグマ", "カラサリス",
+                "アゲハント", "ドクケイル", "ハスブレロ", "ルンパッパ", "ダーテング",
+                "オオスバメ", "ペリッパー", "サーナイト", "アメモース", "キノガッサ",
+                "ヤルキモノ", "ケッキング", "テッカニン", "ゴニョニョ", "バクオング",
+                "マクノシタ", "ハリテヤマ", "エネコロロ", "ボスゴドラ", "チャーレム",
+                "ライボルト", "バルビート", "イルミーゼ", "マルノーム", "サメハダー",
+                "ホエルオー", "ブーピッグ", "パッチール", "ナックラー", "ビブラーバ",
+                "フライゴン", "チルタリス", "ザングース", "ハブネーク", "ルナトーン",
+                "ソルロック", "ドジョッチ", "シザリガー", "ネンドール", "ユレイドル",
+                "アーマルド", "ミロカロス", "カクレオン", "カゲボウズ", "ジュペッタ",
+                "サマヨール", "トロピウス", "ユキワラシ", "オニゴーリ", "タマザラシ",
+                "トドグラー", "トドゼルガ", "ハンテール", "サクラビス", "ジーランス",
+                "ボーマンダ", "メタグロス", "レジロック", "レジアイス", "レジスチル",
+                "ラティアス", "ラティオス", "カイオーガ", "グラードン", "レックウザ",
+                "デオキシス", "ハヤシガメ", "ドダイトス", "モウカザル", "ゴウカザル",
+                "ポッチャマ", "ポッタイシ", "エンペルト", "ムクバード", "ムクホーク",
+                "コロボーシ", "コロトック", "レントラー", "ロズレイド", "ズガイドス",
+                "ラムパルド", "タテトプス", "トリデプス", "ミノムッチ", "ミノマダム",
+                "ガーメイル", "ミツハニー", "ビークイン", "フローゼル", "チェリンボ",
+                "カラナクシ", "トリトドン", "エテボース", "フワライド", "ミミロップ",
+                "ムウマージ", "ドンカラス", "ニャルマー", "ブニャット", "リーシャン",
+                "スカンプー", "スカタンク", "ドーミラー", "ドータクン", "ガブリアス",
+                "ヒポポタス", "カバルドン", "ドラピオン", "グレッグル", "ドクロッグ",
+                "マスキッパ", "ケイコウオ", "ネオラント", "ユキカブリ", "ユキノオー",
+                "マニューラ", "ジバコイル", "ベロベルト", "ドサイドン", "モジャンボ",
+                "エレキブル", "ブーバーン", "トゲキッス", "メガヤンマ", "リーフィア",
+                "グレイシア", "グライオン", "ポリゴンＺ", "エルレイド", "ダイノーズ",
+                "ヨノワール", "ユキメノコ", "エムリット", "ディアルガ", "ヒードラン",
+                "レジギガス", "ギラティナ", "クレセリア", "ダークライ", "アルセウス",
+                "ビクティニ", "ツタージャ", "ジャノビー", "ジャローダ", "チャオブー",
+                "エンブオー", "ミジュマル", "フタチマル", "ダイケンキ", "ミルホッグ",
+                "ヨーテリー", "ハーデリア", "ムーランド", "チョロネコ", "レパルダス",
+                "ヤナッキー", "バオッキー", "ヒヤッキー", "ムシャーナ", "ハトーボー",
+                "ケンホロウ", "ゼブライカ", "ギガイアス", "ココロモリ", "モグリュー",
+                "ドリュウズ", "ドッコラー", "ドテッコツ", "ローブシン", "ガマゲロゲ",
+                "ハハコモリ", "ペンドラー", "エルフーン", "ドレディア", "ワルビアル",
+                "ダルマッカ", "ヒヒダルマ", "マラカッチ", "イシズマイ", "イワパレス",
+                "ズルズキン", "シンボラー", "デスカーン", "プロトーガ", "アバゴーラ",
+                "アーケオス", "ヤブクロン", "ダストダス", "ゾロアーク", "チラーミィ",
+                "チラチーノ", "ゴチルゼル", "ランクルス", "コアルヒー", "バニプッチ",
+                "バニリッチ", "バイバニラ", "メブキジカ", "シュバルゴ", "タマゲタケ",
+                "モロバレル", "ブルンゲル", "ママンボウ", "デンチュラ", "テッシード",
+                "ナットレイ", "ギギギアル", "シビシラス", "シビビール", "シビルドン",
+                "ランプラー", "シャンデラ", "オノノクス", "クマシュン", "ツンベアー",
+                "フリージオ", "チョボマキ", "アギルダー", "コジョフー", "コジョンド",
+                "クリムガン", "キリキザン", "バッフロン", "ウォーグル", "バルチャイ",
+                "バルジーナ", "クイタラン", "アイアント", "サザンドラ", "ウルガモス",
+                "コバルオン", "テラキオン", "ビリジオン", "トルネロス", "ボルトロス",
+                "ランドロス", "ケルディオ", "メロエッタ", "ゲノセクト", "ハリマロン",
+                "ハリボーグ", "ブリガロン", "テールナー", "ゲコガシラ", "ゲッコウガ",
+                "ヒノヤコマ", "コフキムシ", "コフーライ", "カエンジシ", "フラエッテ",
+                "メェークル", "ゴーゴート", "ヤンチャム", "トリミアン", "ニャスパー",
+                "ニダンギル", "ギルガルド", "シュシュプ", "フレフワン", "ペロッパフ",
+                "ペロリーム", "マーイーカ", "カラマネロ", "ガメノデス", "ドラミドロ",
+                "ウデッポウ", "ブロスター", "エリキテル", "エレザード", "ガチゴラス",
+                "アマルルガ", "ニンフィア", "ルチャブル", "ヌメルゴン", "クレッフィ",
+                "オーロット", "バケッチャ", "パンプジン", "カチコール", "クレベース",
+                "オンバット", "オンバーン", "ゼルネアス", "イベルタル", "フクスロー",
+                "ニャヒート", "ガオガエン", "オシャマリ", "アシレーヌ", "ケララッパ",
+                "ドデカバシ", "ヤングース", "デカグース", "アゴジムシ", "デンヂムシ",
+                "クワガノン", "マケンカニ", "ケケンカニ", "オドリドリ", "アブリボン",
+                "ルガルガン", "ドヒドイデ", "ドロバンコ", "バンバドロ", "ラランテス",
+                "マシェード", "ヤトウモリ", "ヌイコグマ", "キテルグマ", "アママイコ",
+                "アマージョ", "キュワワー", "コソクムシ", "シロデスナ", "ナマコブシ",
+                "ネッコアラ", "バクガメス", "トゲデマル", "ミミッキュ", "ハギギシリ",
+                "ジジーロン", "ジャランゴ", "コスモッグ", "コスモウム", "ソルガレオ",
+                "ルナアーラ", "ウツロイド", "テッカグヤ", "カミツルギ", "ネクロズマ",
+                "アーゴヨン", "ズガドーン", "メルメタル", "バチンキー", "ラビフット",
+                "ジメレオン", "ホシガリス", "ヨクバリス", "アオガラス", "サッチムシ",
+                "レドームシ", "ワタシラガ", "カジリガメ", "パルスワン", "トロッゴン",
+                "カジッチュ", "タルップル", "サダイジャ", "サシカマス", "マルヤクデ",
+                "オトスパス", "ポットデス", "ブリムオン", "オーロンゲ", "サニゴーン",
+                "バリコオル", "デスバーン", "マホイップ", "タイレーツ", "バチンウニ",
+                "コオリッポ", "イエッサン", "ドラメシヤ", "ドラパルト", "ザマゼンタ",
+                "ウーラオス", "レジエレキ", "レジドラゴ", "ブリザポス", "レイスポス",
+                "イダイトウ", "ハリーマン", "ラブトロス", "ニャローテ", "アチゲータ",
+                "ウェルカモ", "ワナイダー", "マメバッタ", "パーモット", "パピモッチ",
+                "オリーニョ", "オリーヴァ", "イキリンコ", "ハラバリー", "タギングル",
+                "ノノクラゲ", "リククラゲ", "カプサイジ", "カヌチャン", "ウミトリオ",
+                "オトシドリ", "ナミイルカ", "イルカマン", "モトトカゲ", "キラフロル",
+                "ハカドッグ", "カラミンゴ", "アルクジラ", "ハルクジラ", "ミガルーサ",
+                "シャリタツ", "コノヨザル", "リキキリン", "ノココッチ", "ドドゲザン",
+                "セグレイブ", "コレクレー", "サーフゴー", "パオジアン", "ディンルー",
+                "コライドン", "ミライドン", "カミッチュ", "ヤバソチャ", "イイネイヌ",  
+                "マシマシラ", "キチキギス", "オーガポン", "テラパゴス", "モモワロウ"
+                ];
+
+        const TOTAL_ROWS = 12;
+        const WORD_LENGTH = 5;
+
+        let peer = null;
+        let connections = [];
+        let hostConnection = null;
+        let isHost = false;
+
+        let playerOrder = []; // プレイヤーのPeerID順序
+        let playersInfo = {}; // { id: { name, score } }
+        let turnIndex = 0; // 現在のターン
+
+        let answer = "";
+        let currentRow = 0;
+        let currentCol = 0;
+        let boardState = Array.from({ length: TOTAL_ROWS }, () => Array(WORD_LENGTH).fill(""));
+        let isGameStarted = false;
+        let isGameOver = false;
+
+        function getMyName() {
+            const input = document.getElementById('player-name-input').value.trim();
+            return input || "ゲスト";
+        }
+
+        function initPeer() {
+            peer = new Peer();
+            peer.on('open', (id) => {
+                document.getElementById('connection-status').innerText = "オンライン（準備完了）";
+            });
+        }
+
+        function createRoom() {
+            if (!peer) return;
+            isHost = true;
+            const shortCode = Math.floor(1000 + Math.random() * 9000).toString();
+            
+            peer.destroy();
+            peer = new Peer('pkm-wordle-' + shortCode);
+
+            peer.on('open', (id) => {
+                document.getElementById('connection-status').innerHTML = `部屋作成完了！<br>ルームID: <b style="font-size:1.4rem; color:#007bff;">${shortCode}</b>`;
+                document.getElementById('create-btn').disabled = true;
+                document.getElementById('join-btn').disabled = true;
+                document.getElementById('start-btn').style.display = "inline-block";
+                
+                playerOrder = [id];
+                playersInfo[id] = { name: getMyName(), score: 0 };
+                updateMemberList();
+            });
+
+            peer.on('connection', (conn) => {
+                if (connections.length >= 3) return;
+                connections.push(conn);
+                setupConnection(conn);
+            });
+        }
+
+        function joinRoom() {
+            const code = document.getElementById('room-id-input').value.trim();
+            if (code.length !== 4) {
+                alert("4桁のルームIDを入力してください");
+                return;
+            }
+
+            const hostPeerId = 'pkm-wordle-' + code;
+            hostConnection = peer.connect(hostPeerId);
+
+            hostConnection.on('open', () => {
+                document.getElementById('connection-status').innerText = "部屋に参加しました！ホストの開始を待っています...";
+                document.getElementById('create-btn').disabled = true;
+                document.getElementById('join-btn').disabled = true;
+                
+                // ホストへ自分の名前を送って参加申請
+                hostConnection.send({ type: 'JOIN_REQ', name: getMyName() });
+            });
+
+            setupConnection(hostConnection);
+        }
+
+        function setupConnection(conn) {
+            conn.on('data', (data) => handleNetworkData(data, conn));
+        }
+
+        function handleNetworkData(data, conn) {
+            if (data.type === 'JOIN_REQ') {
+                const newId = conn.peer;
+                if (!playerOrder.includes(newId)) {
+                    playerOrder.push(newId);
+                    playersInfo[newId] = { name: data.name, score: 0 };
+                }
+                broadcastState();
+                updateMemberList();
+            }
+            else if (data.type === 'SYNC_MEMBERS') {
+                playerOrder = data.playerOrder;
+                playersInfo = data.playersInfo;
+                updateMemberList();
+            }
+            else if (data.type === 'START_GAME') {
+                answer = data.answer;
+                playerOrder = data.playerOrder;
+                playersInfo = data.playersInfo;
+                turnIndex = data.turnIndex;
+                startClientGame();
+            }
+            else if (data.type === 'SUBMIT_GUESS') {
+                // ターン回答を受信し全員に描画
+                applyGuessResult(data.row, data.guess, data.playerName);
+                turnIndex = data.nextTurnIndex;
+                currentRow = data.nextRow;
+
+                if (data.isWin) {
+                    isGameOver = true;
+                    playersInfo[data.playerId].score += 1;
+                    document.getElementById('message').innerText = `🎉 【${data.playerName}】大正解！`;
+                    if (isHost) document.getElementById('next-round-btn').style.display = 'inline-block';
+                } else if (currentRow === TOTAL_ROWS) {
+                    isGameOver = true;
+                    document.getElementById('message').innerText = `ゲームオーバー！正解は 【${answer}】 でした！`;
+                    if (isHost) document.getElementById('next-round-btn').style.display = 'inline-block';
+                }
+
+                updateGameHeaderUI();
+
+                // ホストの場合は全クライアントへ転送
+                if (isHost) {
+                    broadcast(data);
+                }
+            }
+        }
+
+        function broadcast(data) {
+            connections.forEach(conn => { if (conn.open) conn.send(data); });
+        }
+
+        function broadcastState() {
+            broadcast({ type: 'SYNC_MEMBERS', playerOrder: playerOrder, playersInfo: playersInfo });
+        }
+
+        function updateMemberList() {
+            const listEl = document.getElementById('member-list');
+            listEl.innerText = `参加メンバー (${playerOrder.length}/4人): ` + playerOrder.map(id => playersInfo[id]?.name || "不明").join(', ');
+        }
+
+        // --- ゲーム開始 ---
+        function startGame() {
+            if (!isHost) return;
+            answer = POKEMON_LIST[Math.floor(Math.random() * POKEMON_LIST.length)];
+            turnIndex = 0;
+
+            const startData = {
+                type: 'START_GAME',
+                answer: answer,
+                playerOrder: playerOrder,
+                playersInfo: playersInfo,
+                turnIndex: turnIndex
+            };
+
+            broadcast(startData);
+            startClientGame();
+        }
+
+        function startClientGame() {
+            isGameStarted = true;
+            isGameOver = false;
+            currentRow = 0;
+            currentCol = 0;
+            boardState = Array.from({ length: TOTAL_ROWS }, () => Array(WORD_LENGTH).fill(""));
+
+            document.getElementById('lobby-area').style.display = 'none';
+            document.getElementById('game-header').style.display = 'flex';
+            document.getElementById('next-round-btn').style.display = 'none';
+            document.getElementById('message').innerText = "";
+
+            // キーボードのリセット
+            document.querySelectorAll('.key').forEach(k => k.classList.remove('correct', 'present', 'absent'));
+
+            initBoards();
+            updateGameHeaderUI();
+        }
+
+        function updateGameHeaderUI() {
+            const currentTurnPlayerId = playerOrder[turnIndex];
+            const currentTurnName = playersInfo[currentTurnPlayerId]?.name || "誰か";
+            const isMyTurn = (currentTurnPlayerId === peer.id);
+
+            const indicator = document.getElementById('turn-indicator');
+            if (isGameOver) {
+                indicator.innerText = "試合終了！";
+                indicator.style.color = "#333";
+            } else if (isMyTurn) {
+                indicator.innerText = "👉 あなたのターンです！";
+                indicator.style.color = "#28a745";
+            } else {
+                indicator.innerText = `⏳ ${currentTurnName} さんの思考中...`;
+                indicator.style.color = "#007bff";
+            }
+
+            // スコアボード描画
+            const scoreBoard = document.getElementById('score-board');
+            scoreBoard.innerHTML = "";
+            playerOrder.forEach(id => {
+                const p = playersInfo[id];
+                const activeClass = (id === currentTurnPlayerId && !isGameOver) ? "active-turn" : "";
+                const item = document.createElement('div');
+                item.className = `score-item ${activeClass}`;
+                item.innerText = `${p.name}: ${p.score}勝`;
+                scoreBoard.appendChild(item);
+            });
+        }
+
+        // --- 回答処理 & 同期 ---
+        function submitGuess() {
+            if (!isGameStarted || isGameOver) return;
+
+            const currentTurnPlayerId = playerOrder[turnIndex];
+            if (currentTurnPlayerId !== peer.id) {
+                document.getElementById("message").innerText = "相手のターンです！";
+                return;
+            }
+
+            if (currentCol < WORD_LENGTH) {
+                document.getElementById("message").innerText = "5文字のポケモン入力してください！";
+                return;
+            }
+
+            const guess = boardState[currentRow].join("");
+
+            if (!POKEMON_LIST.includes(guess)) {
+                document.getElementById("message").innerText = "リストにないポケモンです！";
+                return;
+            }
+
+            document.getElementById("message").innerText = "";
+
+            const isWin = (guess === answer);
+            const myName = playersInfo[peer.id].name;
+            const nextTurn = (turnIndex + 1) % playerOrder.length;
+            const nextRow = currentRow + 1;
+
+            const submitData = {
+                type: 'SUBMIT_GUESS',
+                row: currentRow,
+                guess: guess,
+                playerId: peer.id,
+                playerName: myName,
+                isWin: isWin,
+                nextTurnIndex: nextTurn,
+                nextRow: nextRow
+            };
+
+            // 自分に反映
+            applyGuessResult(currentRow, guess, myName);
+            turnIndex = nextTurn;
+            currentRow = nextRow;
+            currentCol = 0;
+
+            if (isWin) {
+                isGameOver = true;
+                playersInfo[peer.id].score += 1;
+                document.getElementById('message').innerText = `🎉 【${myName}】大正解！`;
+                if (isHost) document.getElementById('next-round-btn').style.display = 'inline-block';
+            } else if (currentRow === TOTAL_ROWS) {
+                isGameOver = true;
+                document.getElementById('message').innerText = `ゲームオーバー！正解は 【${answer}】 でした！`;
+                if (isHost) document.getElementById('next-round-btn').style.display = 'inline-block';
+            }
+
+            updateGameHeaderUI();
+
+            // 送信
+            if (isHost) broadcast(submitData);
+            else if (hostConnection) hostConnection.send(submitData);
+        }
+
+        function applyGuessResult(rowIdx, guessStr, playerName) {
+            for (let c = 0; c < WORD_LENGTH; c++) {
+                const tile = document.getElementById(`tile-${rowIdx}-${c}`);
+                const char = guessStr[c];
+                tile.innerText = char;
+
+                let statusClass = "absent";
+                if (char === answer[c]) statusClass = "correct";
+                else if (answer.includes(char)) statusClass = "present";
+
+                tile.classList.add(statusClass);
+                updateKeyColor(char, statusClass);
+            }
+        }
+
+        function initBoards() {
+            const col0 = document.getElementById("board-col-0");
+            const col1 = document.getElementById("board-col-1");
+            col0.innerHTML = "";
+            col1.innerHTML = "";
+
+            for (let r = 0; r < TOTAL_ROWS; r++) {
+                const row = document.createElement("div");
+                row.className = "row";
+                for (let c = 0; c < WORD_LENGTH; c++) {
+                    const tile = document.createElement("div");
+                    tile.className = "tile";
+                    tile.id = `tile-${r}-${c}`;
+                    row.appendChild(tile);
+                }
+                if (r < 6) col0.appendChild(row);
+                else col1.appendChild(row);
+            }
+        }
+
+        function inputChar(char) {
+            if (!isGameStarted || isGameOver) return;
+            if (playerOrder[turnIndex] !== peer.id) return; // 自分のターンでなければ入力不可
+
+            if (currentCol < WORD_LENGTH && currentRow < TOTAL_ROWS) {
+                boardState[currentRow][currentCol] = char;
+                document.getElementById(`tile-${currentRow}-${currentCol}`).innerText = char;
+                currentCol++;
+            }
+        }
+
+        function deleteChar() {
+            if (!isGameStarted || isGameOver) return;
+            if (playerOrder[turnIndex] !== peer.id) return;
+
+            if (currentCol > 0) {
+                currentCol--;
+                boardState[currentRow][currentCol] = "";
+                document.getElementById(`tile-${currentRow}-${currentCol}`).innerText = "";
+            }
+        }
+
+        function updateKeyColor(char, status) {
+            const keyBtn = document.querySelector(`.key[data-key="${char}"]`);
+            if (!keyBtn) return;
+            if (keyBtn.classList.contains("correct")) return;
+            if (keyBtn.classList.contains("present") && status === "absent") return;
+
+            keyBtn.classList.remove("correct", "present", "absent");
+            keyBtn.classList.add(status);
+        }
+
+        initPeer();
+        initBoards();
+    </script>
+</body>
+</html>
