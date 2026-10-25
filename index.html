@@ -238,6 +238,18 @@
     </div>
     
     <div id="message"></div>
+    
+    <!-- 下書き欄（自分のターン待ちの時に入力できる） -->
+    <div id="draft-container" style="display: none; flex-direction: column; align-items: center; margin-bottom: 8px;">
+        <div style="font-size: 0.8rem; color: #666; margin-bottom: 3px;">✏️ 次の回答の下書き（ターンが来たら決定できます）</div>
+        <div class="row" id="draft-row" style="max-width: 200px;">
+            <div class="tile draft-tile" id="draft-0"></div>
+            <div class="tile draft-tile" id="draft-1"></div>
+            <div class="tile draft-tile" id="draft-2"></div>
+            <div class="tile draft-tile" id="draft-3"></div>
+            <div class="tile draft-tile" id="draft-4"></div>
+        </div>
+    </div>
 
     <!-- キーボード -->
     <div class="keyboard-container">
@@ -774,7 +786,7 @@
 
         function inputChar(char) {
             if (!isGameStarted || isGameOver) return;
-            if (playerOrder[turnIndex] !== peer.id) return; // 自分のターンでなければ入力不可
+            // if (playerOrder[turnIndex] !== peer.id) return; // 自分のターンでなければ入力不可
 
             if (currentCol < WORD_LENGTH && currentRow < TOTAL_ROWS) {
                 boardState[currentRow][currentCol] = char;
@@ -785,7 +797,7 @@
 
         function deleteChar() {
             if (!isGameStarted || isGameOver) return;
-            if (playerOrder[turnIndex] !== peer.id) return;
+            // if (playerOrder[turnIndex] !== peer.id) return;
 
             if (currentCol > 0) {
                 currentCol--;
