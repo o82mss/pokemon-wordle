@@ -103,33 +103,42 @@
         }
 
         /* ボード (6行×2列) */
+        /* ボード全体のコンテナ */
         #boards-container {
             display: flex;
             justify-content: center;
-            gap: clamp(4px, 1.5vw, 10px);
-            width: 90%;
-            max-width: 480px;
-            margin-bottom: 8px;
+            gap: 12px;
+            width: 100%;
+            max-width: 360px; /* スマホでも広がりすぎないようにコンパクトに制限 */
+            margin: 0 auto 8px auto;
         }
+        
+        /* 6行の列 */
         .board-column {
             display: grid;
             grid-template-rows: repeat(6, 1fr);
             gap: 4px;
+            flex: 1;
+            max-width: 160px;
         }
+        
         .row {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 4px;
-            position: relative;
+            width: 100%;
         }
+        
+        /* 各タイル */
         .tile {
-            width: 36px;
-            height: 36px;
+            width: 100%;
+            max-width: 38px; /* タイルの大きさに上限を持たせることで広がりを防ぐ */
+            aspect-ratio: 1 / 1;
             border: 2px solid #d3d6da;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 1.0rem;
+            font-size: 0.95rem;
             font-weight: bold;
             background-color: #fff;
             border-radius: 4px;
