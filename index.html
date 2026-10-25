@@ -237,9 +237,17 @@
         <button class="btn" id="next-round-btn" onclick="startGame()" style="background-color:#28a745; display:none; margin-top:4px;">次の試合へ！</button>
     </div>
 
+    <!-- ボード (12回分) -->
+    <div id="boards-container">
+        <div class="board-column" id="board-col-0"></div>
+        <div class="board-column" id="board-col-1"></div>
+    </div>
+    
+    <div id="message"></div>
+
     <!-- 下書き欄（対戦中は常に表示） -->
     <div id="draft-container">
-        <div style="font-size: 0.75rem; color: #007bff; font-weight: bold; margin-bottom: 2px;" id="draft-label">✏️ 次の下書き（ターンに関わらず入力できます）</div>
+        <div style="font-size: 0.75rem; color: #007bff; font-weight: bold; margin-bottom: 2px;" id="draft-label">回答欄</div>
         <div class="row" style="max-width: 200px;">
             <div class="tile draft-tile" id="draft-0"></div>
             <div class="tile draft-tile" id="draft-1"></div>
@@ -248,14 +256,6 @@
             <div class="tile draft-tile" id="draft-4"></div>
         </div>
     </div>
-
-    <!-- ボード (12回分) -->
-    <div id="boards-container">
-        <div class="board-column" id="board-col-0"></div>
-        <div class="board-column" id="board-col-1"></div>
-    </div>
-    
-    <div id="message"></div>
 
     <!-- キーボード -->
     <div class="keyboard-container">
