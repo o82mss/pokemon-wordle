@@ -160,10 +160,12 @@
         .keyboard-container {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 4px;
             width: 100%;
             max-width: 480px;
-            overflow-x: auto;
+            /* スマホ画面（幅380px以下など）の時に自動で縮小させる */
+            transform: scale(0.92); 
+            transform-origin: top center; /* 上部基準で縮小 */
         }
         .keyboard-section {
             background-color: #e9ecef;
