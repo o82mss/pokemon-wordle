@@ -70,12 +70,12 @@
             background: #fff;
             padding: 8px 12px;
             border-radius: 8px;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             display: none;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
         }
         #turn-indicator {
             font-size: 1.1rem;
@@ -109,7 +109,7 @@
             gap: 12px;
             width: 100%;
             max-width: 360px;
-            margin: 0 auto 6px auto;
+            margin: 0 auto 2px auto;
         }
         .board-column {
             display: grid;
@@ -141,29 +141,16 @@
         .tile.present, .key.present { background-color: #c9b458 !important; color: white !important; border-color: #c9b458 !important; }
         .tile.absent, .key.absent { background-color: #787c7e !important; color: white !important; border-color: #787c7e !important; opacity: 0.6; }
 
-        /* 下書き欄（常に表示） */
-        /* 下書きエリア（中央揃え ＆ 左側にラベル配置） */
+        /* 下書き（解答欄）エリア（テキストなし・中央揃え） */
         #draft-container {
-            display: none; /* ゲーム開始前は隠し、開始後に表示 */
-            position: relative;
+            display: none;
             width: 100%;
-            max-width: 360px; /* ボードの最大幅と合わせる */
-            margin: 0 auto 6px auto; /* 上下の余白を詰める */
+            max-width: 360px;
+            margin: 0 auto 2px auto;
             justify-content: center;
             align-items: center;
-            min-height: 40px;
+            min-height: 36px;
         }
-        
-        /* 左側に配置する「解答欄」テキスト */
-        #draft-label {
-            position: absolute;
-            left: 8px; /* 左端からの位置 */
-            font-size: 0.8rem;
-            font-weight: bold;
-            color: #007bff;
-            white-space: nowrap;
-        }
-        
         .draft-tile {
             border-color: #007bff !important;
             background-color: #f8f9fa;
@@ -171,26 +158,26 @@
         }
 
         #message {
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             font-weight: bold;
-            min-height: 20px;
-            font-size: 0.9rem;
+            min-height: 18px;
+            font-size: 0.85rem;
             color: #d9534f;
             text-align: center;
         }
 
-        /* 縦書き風キーボード */
+        /* 縦書き風キーボード（下書きエリアとの間隔を狭める） */
         .keyboard-container {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 3px;
             width: 100%;
             max-width: 420px;
             margin: 0 auto;
         }
         .keyboard-section {
             background-color: #e9ecef;
-            padding: 4px;
+            padding: 3px;
             border-radius: 6px;
         }
         .grid-50on, .grid-sub {
@@ -202,7 +189,7 @@
         }
         .key {
             direction: ltr;
-            height: 32px;
+            height: 30px;
             min-width: 24px;
             padding: 1px;
             font-size: 0.8rem;
@@ -219,7 +206,7 @@
         .key:active { background-color: #bbb; }
         .key.empty { background-color: transparent; border: none; pointer-events: none; }
         .key.action-del { background-color: #ffcccc; }
-        .key.action-enter { background-color: #d4edda; grid-row: span 2; height: 66px; }
+        .key.action-enter { background-color: #d4edda; grid-row: span 2; height: 62px; }
     </style>
 </head>
 <body>
@@ -249,7 +236,7 @@
     <div id="game-header">
         <div id="turn-indicator">準備中</div>
         <div id="score-board"></div>
-        <button class="btn" id="next-round-btn" onclick="startGame()" style="background-color:#28a745; display:none; margin-top:4px;">次の試合へ！</button>
+        <button class="btn" id="next-round-btn" onclick="startGame()" style="background-color:#28a745; display:none; margin-top:2px;">次の試合へ！</button>
     </div>
 
     <!-- ボード (12回分) -->
@@ -258,9 +245,8 @@
         <div class="board-column" id="board-col-1"></div>
     </div>
 
-    <!-- 下書き欄（対戦中は常に表示） -->
+    <!-- 下書き（解答欄）エリア（テキストなし・中央） -->
     <div id="draft-container">
-        <div style="font-size: 0.75rem; color: #007bff; font-weight: bold; margin-bottom: 2px;" id="draft-label">解答欄</div>
         <div class="row" style="max-width: 200px;">
             <div class="tile draft-tile" id="draft-0"></div>
             <div class="tile draft-tile" id="draft-1"></div>
@@ -269,7 +255,7 @@
             <div class="tile draft-tile" id="draft-4"></div>
         </div>
     </div>
-
+    
     <div id="message"></div>
 
     <!-- キーボード -->
@@ -522,7 +508,10 @@
 
         function initPeer() {
             document.getElementById('connection-status').innerText = "通信サーバーに接続中...";
-            peer = new Peer();
+            peer = new Peer({
+                // バックグラウンド等で接続が切れにくくするための設定
+                config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] }
+            });
             
             peer.on('open', (id) => {
                 document.getElementById('connection-status').innerText = "オンライン（準備完了）";
@@ -531,15 +520,24 @@
             });
 
             peer.on('error', (err) => {
-                document.getElementById('connection-status').innerText = "接続エラー。ページを再読み込みしてください。";
+                document.getElementById('connection-status').innerText = "接続エラー。再接続を試みます...";
             });
 
             peer.on('connection', (conn) => {
                 if (!isHost || connections.length >= 3) return;
-                connections.push(conn);
+                if (!connections.includes(conn)) connections.push(conn);
                 setupConnection(conn);
             });
         }
+
+        // バックグラウンドから復帰した際にPeerJSの接続状態を強制リフレッシュ
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                if (peer && peer.disconnected) {
+                    peer.reconnect();
+                }
+            }
+        });
 
         function createRoom() {
             if (!peer) return;
@@ -568,7 +566,7 @@
 
             peer.on('connection', (conn) => {
                 if (connections.length >= 3) return;
-                connections.push(conn);
+                if (!connections.includes(conn)) connections.push(conn);
                 setupConnection(conn);
             });
         }
@@ -602,6 +600,9 @@
 
         function setupConnection(conn) {
             conn.on('data', (data) => handleNetworkData(data, conn));
+            conn.on('close', () => {
+                connections = connections.filter(c => c !== conn);
+            });
         }
 
         function handleNetworkData(data, conn) {
@@ -631,9 +632,11 @@
                 turnIndex = data.nextTurnIndex;
                 currentRow = data.nextRow;
 
+                // スコアの同期を安全に反映
+                playersInfo = data.playersInfo;
+
                 if (data.isWin) {
                     isGameOver = true;
-                    playersInfo[data.playerId].score += 1;
                     document.getElementById('message').innerText = `🎉 【${data.playerName}】大正解！`;
                     if (isHost) document.getElementById('next-round-btn').style.display = 'inline-block';
                 } else if (currentRow === TOTAL_ROWS) {
@@ -668,6 +671,12 @@
             answer = POKEMON_LIST[Math.floor(Math.random() * POKEMON_LIST.length)];
             turnIndex = 0;
 
+            // ラウンド開始ごとに参加メンバーの順番をランダムにシャッフル (Fisher-Yatesシャッフル)
+            for (let i = playerOrder.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [playerOrder[i], playerOrder[j]] = [playerOrder[j], playerOrder[i]];
+            }
+
             const startData = {
                 type: 'START_GAME',
                 answer: answer,
@@ -691,7 +700,7 @@
 
             document.getElementById('lobby-area').style.display = 'none';
             document.getElementById('game-header').style.display = 'flex';
-            document.getElementById('draft-container').style.display = 'flex'; // ゲーム中は常に下書き欄を表示
+            document.getElementById('draft-container').style.display = 'flex';
             document.getElementById('next-round-btn').style.display = 'none';
             document.getElementById('message').innerText = "";
 
@@ -716,17 +725,18 @@
             } else if (isMyTurn) {
                 indicator.innerText = "👉 あなたのターンです！";
                 indicator.style.color = "#28a745";
-                draftContainer.style.display = 'flex'; // 常に表示を維持
+                draftContainer.style.display = 'flex';
             } else {
                 indicator.innerText = `⏳ ${currentTurnName} さんの思考中...`;
                 indicator.style.color = "#007bff";
-                draftContainer.style.display = 'flex'; // 常に表示を維持
+                draftContainer.style.display = 'flex';
             }
 
             const scoreBoard = document.getElementById('score-board');
             scoreBoard.innerHTML = "";
             playerOrder.forEach(id => {
                 const p = playersInfo[id];
+                if (!p) return;
                 const activeClass = (id === currentTurnPlayerId && !isGameOver) ? "active-turn" : "";
                 const item = document.createElement('div');
                 item.className = `score-item ${activeClass}`;
@@ -740,11 +750,10 @@
 
             const currentTurnPlayerId = playerOrder[turnIndex];
             if (currentTurnPlayerId !== peer.id) {
-                document.getElementById("message").innerText = "今は相手のターンです！下書きに入力して待ちましょう。";
+                document.getElementById("message").innerText = "今は相手のターンです！解答欄に入力して待ちましょう。";
                 return;
             }
 
-            // ボードが空で下書きに5文字入っていれば、決定時に自動で下書きをボードへ反映
             const draftWord = draftState.join("");
             if (currentCol === 0 && draftWord.length === WORD_LENGTH) {
                 for (let c = 0; c < WORD_LENGTH; c++) {
@@ -775,6 +784,11 @@
             const nextTurn = (turnIndex + 1) % playerOrder.length;
             const nextRow = currentRow + 1;
 
+            // スコア計算を安全に行う（二重加算防止）
+            if (isWin) {
+                playersInfo[peer.id].score += 1;
+            }
+
             const submitData = {
                 type: 'SUBMIT_GUESS',
                 row: currentRow,
@@ -783,7 +797,8 @@
                 playerName: myName,
                 isWin: isWin,
                 nextTurnIndex: nextTurn,
-                nextRow: nextRow
+                nextRow: nextRow,
+                playersInfo: playersInfo // 最新スコアを必ず全クライアントへ同期
             };
 
             applyGuessResult(currentRow, guess);
@@ -793,7 +808,6 @@
 
             if (isWin) {
                 isGameOver = true;
-                playersInfo[peer.id].score += 1;
                 document.getElementById('message').innerText = `🎉 【${myName}】大正解！`;
                 if (isHost) document.getElementById('next-round-btn').style.display = 'inline-block';
             } else if (currentRow === TOTAL_ROWS) {
@@ -843,7 +857,6 @@
             }
         }
 
-        /* 常に下書き欄（draftState）に入力する仕組み */
         function inputChar(char) {
             if (!isGameStarted || isGameOver) return;
             
@@ -854,7 +867,6 @@
             }
         }
 
-        /* 常に下書き欄（draftState）から削除する仕組み */
         function deleteChar() {
             if (!isGameStarted || isGameOver) return;
             
