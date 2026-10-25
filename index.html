@@ -103,17 +103,14 @@
         }
 
         /* ボード (6行×2列) */
-        /* ボード全体のコンテナ */
         #boards-container {
             display: flex;
             justify-content: center;
             gap: 12px;
             width: 100%;
-            max-width: 360px; /* スマホでも広がりすぎないようにコンパクトに制限 */
-            margin: 0 auto 8px auto;
+            max-width: 360px;
+            margin: 0 auto 6px auto;
         }
-        
-        /* 6行の列 */
         .board-column {
             display: grid;
             grid-template-rows: repeat(6, 1fr);
@@ -121,18 +118,15 @@
             flex: 1;
             max-width: 160px;
         }
-        
         .row {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 4px;
             width: 100%;
         }
-        
-        /* 各タイル */
         .tile {
             width: 100%;
-            max-width: 38px; /* タイルの大きさに上限を持たせることで広がりを防ぐ */
+            max-width: 38px;
             aspect-ratio: 1 / 1;
             border: 2px solid #d3d6da;
             display: flex;
@@ -146,6 +140,20 @@
         .tile.correct, .key.correct { background-color: #6aaa64 !important; color: white !important; border-color: #6aaa64 !important; }
         .tile.present, .key.present { background-color: #c9b458 !important; color: white !important; border-color: #c9b458 !important; }
         .tile.absent, .key.absent { background-color: #787c7e !important; color: white !important; border-color: #787c7e !important; opacity: 0.6; }
+
+        /* 下書き欄 */
+        #draft-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 6px;
+            width: 100%;
+        }
+        .draft-tile {
+            border-color: #007bff !important;
+            background-color: #f8f9fa;
+            color: #007bff;
+        }
 
         #message {
             margin-bottom: 6px;
@@ -162,32 +170,30 @@
             flex-direction: column;
             gap: 4px;
             width: 100%;
-            max-width: 480px;
-            /* スマホ画面（幅380px以下など）の時に自動で縮小させる */
-            transform: scale(0.92); 
-            transform-origin: top center; /* 上部基準で縮小 */
+            max-width: 420px;
+            margin: 0 auto;
         }
         .keyboard-section {
             background-color: #e9ecef;
-            padding: 5px;
-            border-radius: 8px;
+            padding: 4px;
+            border-radius: 6px;
         }
         .grid-50on, .grid-sub {
             display: grid;
             grid-template-rows: repeat(5, 1fr);
             grid-auto-flow: column;
             direction: rtl;
-            gap: 3px;
+            gap: 2px;
         }
         .key {
             direction: ltr;
-            height: 34px;
-            min-width: 28px;
-            padding: 2px;
-            font-size: 0.85rem;
+            height: 32px;
+            min-width: 24px;
+            padding: 1px;
+            font-size: 0.8rem;
             font-weight: bold;
             border: 1px solid #ccc;
-            border-radius: 4px;
+            border-radius: 3px;
             background-color: #ffffff;
             cursor: pointer;
             display: flex;
@@ -198,25 +204,25 @@
         .key:active { background-color: #bbb; }
         .key.empty { background-color: transparent; border: none; pointer-events: none; }
         .key.action-del { background-color: #ffcccc; }
-        .key.action-enter { background-color: #d4edda; grid-row: span 2; height: 71px; }
+        .key.action-enter { background-color: #d4edda; grid-row: span 2; height: 66px; }
     </style>
 </head>
 <body>
 
-    <h1>ポケモン Wordle</h1>
+    <h1>ポケモン Wordle ターンバトル</h1>
 
     <!-- ロビー画面 -->
     <div id="lobby-area">
-        <div id="connection-status">通信準備中...</div>
+        <div id="connection-status">通信サーバーに接続中...</div>
         <div class="input-group">
             名前: <input type="text" id="player-name-input" class="name-input" placeholder="トレーナー名">
         </div>
         <div class="input-group">
-            <button class="btn" id="create-btn" onclick="createRoom()">部屋を作る</button>
+            <button class="btn" id="create-btn" onclick="createRoom()" disabled>部屋を作る</button>
         </div>
         <div class="input-group" style="margin-top:10px;">
             ルームID: <input type="text" id="room-id-input" class="code-input" placeholder="4桁">
-            <button class="btn" id="join-btn" onclick="joinRoom()">参加する</button>
+            <button class="btn" id="join-btn" onclick="joinRoom()" disabled>参加する</button>
         </div>
         <div id="member-list"></div>
         <div class="input-group" style="margin-top:10px;">
@@ -231,18 +237,10 @@
         <button class="btn" id="next-round-btn" onclick="startGame()" style="background-color:#28a745; display:none; margin-top:4px;">次の試合へ！</button>
     </div>
 
-    <!-- ボード (12回分) -->
-    <div id="boards-container">
-        <div class="board-column" id="board-col-0"></div>
-        <div class="board-column" id="board-col-1"></div>
-    </div>
-    
-    <div id="message"></div>
-    
-    <!-- 下書き欄（自分のターン待ちの時に入力できる） -->
-    <div id="draft-container" style="display: none; flex-direction: column; align-items: center; margin-bottom: 8px;">
-        <div style="font-size: 0.8rem; color: #666; margin-bottom: 3px;">✏️ 次の回答の下書き（ターンが来たら決定できます）</div>
-        <div class="row" id="draft-row" style="max-width: 200px;">
+    <!-- 下書き欄（待ち時間に入力可能） -->
+    <div id="draft-container">
+        <div style="font-size: 0.75rem; color: #007bff; font-weight: bold; margin-bottom: 2px;" id="draft-label">✏️ 次の下書き（ターンが来たら決定できます）</div>
+        <div class="row" style="max-width: 200px;">
             <div class="tile draft-tile" id="draft-0"></div>
             <div class="tile draft-tile" id="draft-1"></div>
             <div class="tile draft-tile" id="draft-2"></div>
@@ -250,6 +248,14 @@
             <div class="tile draft-tile" id="draft-4"></div>
         </div>
     </div>
+
+    <!-- ボード (12回分) -->
+    <div id="boards-container">
+        <div class="board-column" id="board-col-0"></div>
+        <div class="board-column" id="board-col-1"></div>
+    </div>
+    
+    <div id="message"></div>
 
     <!-- キーボード -->
     <div class="keyboard-container">
@@ -482,14 +488,15 @@
         let hostConnection = null;
         let isHost = false;
 
-        let playerOrder = []; // プレイヤーのPeerID順序
-        let playersInfo = {}; // { id: { name, score } }
-        let turnIndex = 0; // 現在のターン
+        let playerOrder = [];
+        let playersInfo = {};
+        let turnIndex = 0;
 
         let answer = "";
         let currentRow = 0;
         let currentCol = 0;
         let boardState = Array.from({ length: TOTAL_ROWS }, () => Array(WORD_LENGTH).fill(""));
+        let draftState = Array(WORD_LENGTH).fill(""); // 下書き用配列
         let isGameStarted = false;
         let isGameOver = false;
 
@@ -499,9 +506,23 @@
         }
 
         function initPeer() {
+            document.getElementById('connection-status').innerText = "通信サーバーに接続中...";
             peer = new Peer();
+            
             peer.on('open', (id) => {
                 document.getElementById('connection-status').innerText = "オンライン（準備完了）";
+                document.getElementById('create-btn').disabled = false;
+                document.getElementById('join-btn').disabled = false;
+            });
+
+            peer.on('error', (err) => {
+                document.getElementById('connection-status').innerText = "接続エラー。ページを再読み込みしてください。";
+            });
+
+            peer.on('connection', (conn) => {
+                if (!isHost || connections.length >= 3) return;
+                connections.push(conn);
+                setupConnection(conn);
             });
         }
 
@@ -511,6 +532,7 @@
             const shortCode = Math.floor(1000 + Math.random() * 9000).toString();
             
             peer.destroy();
+            document.getElementById('connection-status').innerText = "部屋を作成中...";
             peer = new Peer('pkm-wordle-' + shortCode);
 
             peer.on('open', (id) => {
@@ -522,6 +544,11 @@
                 playerOrder = [id];
                 playersInfo[id] = { name: getMyName(), score: 0 };
                 updateMemberList();
+            });
+
+            peer.on('error', (err) => {
+                alert("部屋の作成に失敗しました。もう一度お試しください。");
+                window.location.reload();
             });
 
             peer.on('connection', (conn) => {
@@ -539,6 +566,7 @@
             }
 
             const hostPeerId = 'pkm-wordle-' + code;
+            document.getElementById('connection-status').innerText = "部屋に接続中...";
             hostConnection = peer.connect(hostPeerId);
 
             hostConnection.on('open', () => {
@@ -546,8 +574,12 @@
                 document.getElementById('create-btn').disabled = true;
                 document.getElementById('join-btn').disabled = true;
                 
-                // ホストへ自分の名前を送って参加申請
                 hostConnection.send({ type: 'JOIN_REQ', name: getMyName() });
+            });
+
+            hostConnection.on('error', (err) => {
+                alert("部屋が見つからないか、接続に失敗しました。");
+                window.location.reload();
             });
 
             setupConnection(hostConnection);
@@ -580,8 +612,7 @@
                 startClientGame();
             }
             else if (data.type === 'SUBMIT_GUESS') {
-                // ターン回答を受信し全員に描画
-                applyGuessResult(data.row, data.guess, data.playerName);
+                applyGuessResult(data.row, data.guess);
                 turnIndex = data.nextTurnIndex;
                 currentRow = data.nextRow;
 
@@ -598,7 +629,6 @@
 
                 updateGameHeaderUI();
 
-                // ホストの場合は全クライアントへ転送
                 if (isHost) {
                     broadcast(data);
                 }
@@ -618,7 +648,6 @@
             listEl.innerText = `参加メンバー (${playerOrder.length}/4人): ` + playerOrder.map(id => playersInfo[id]?.name || "不明").join(', ');
         }
 
-        // --- ゲーム開始 ---
         function startGame() {
             if (!isHost) return;
             answer = POKEMON_LIST[Math.floor(Math.random() * POKEMON_LIST.length)];
@@ -642,13 +671,15 @@
             currentRow = 0;
             currentCol = 0;
             boardState = Array.from({ length: TOTAL_ROWS }, () => Array(WORD_LENGTH).fill(""));
+            draftState = Array(WORD_LENGTH).fill("");
+            updateDraftUI();
 
             document.getElementById('lobby-area').style.display = 'none';
             document.getElementById('game-header').style.display = 'flex';
+            document.getElementById('draft-container').style.display = 'flex';
             document.getElementById('next-round-btn').style.display = 'none';
             document.getElementById('message').innerText = "";
 
-            // キーボードのリセット
             document.querySelectorAll('.key').forEach(k => k.classList.remove('correct', 'present', 'absent'));
 
             initBoards();
@@ -661,18 +692,34 @@
             const isMyTurn = (currentTurnPlayerId === peer.id);
 
             const indicator = document.getElementById('turn-indicator');
+            const draftContainer = document.getElementById('draft-container');
+
             if (isGameOver) {
                 indicator.innerText = "試合終了！";
                 indicator.style.color = "#333";
+                draftContainer.style.display = 'none';
             } else if (isMyTurn) {
                 indicator.innerText = "👉 あなたのターンです！";
                 indicator.style.color = "#28a745";
+                draftContainer.style.display = 'none'; // 自分のターン時は下書きを非表示にしボードへ反映
+
+                // 自分のターンになった瞬間、もし下書きに文字があればボードへ自動反映
+                const draftWord = draftState.join("");
+                if (draftWord.length > 0) {
+                    for (let c = 0; c < WORD_LENGTH; c++) {
+                        boardState[currentRow][c] = draftState[c];
+                        document.getElementById(`tile-${currentRow}-${c}`).innerText = draftState[c];
+                    }
+                    currentCol = draftWord.length;
+                    draftState = Array(WORD_LENGTH).fill("");
+                    updateDraftUI();
+                }
             } else {
                 indicator.innerText = `⏳ ${currentTurnName} さんの思考中...`;
                 indicator.style.color = "#007bff";
+                draftContainer.style.display = 'flex'; // 相手のターン時は下書き可能に
             }
 
-            // スコアボード描画
             const scoreBoard = document.getElementById('score-board');
             scoreBoard.innerHTML = "";
             playerOrder.forEach(id => {
@@ -685,18 +732,17 @@
             });
         }
 
-        // --- 回答処理 & 同期 ---
         function submitGuess() {
             if (!isGameStarted || isGameOver) return;
 
             const currentTurnPlayerId = playerOrder[turnIndex];
             if (currentTurnPlayerId !== peer.id) {
-                document.getElementById("message").innerText = "相手のターンです！";
+                document.getElementById("message").innerText = "今は相手のターンです！下書きに入力して待ちましょう。";
                 return;
             }
 
             if (currentCol < WORD_LENGTH) {
-                document.getElementById("message").innerText = "5文字のポケモン入力してください！";
+                document.getElementById("message").innerText = "5文字のポケモンを入力してください！";
                 return;
             }
 
@@ -725,8 +771,7 @@
                 nextRow: nextRow
             };
 
-            // 自分に反映
-            applyGuessResult(currentRow, guess, myName);
+            applyGuessResult(currentRow, guess);
             turnIndex = nextTurn;
             currentRow = nextRow;
             currentCol = 0;
@@ -744,12 +789,11 @@
 
             updateGameHeaderUI();
 
-            // 送信
             if (isHost) broadcast(submitData);
             else if (hostConnection) hostConnection.send(submitData);
         }
 
-        function applyGuessResult(rowIdx, guessStr, playerName) {
+        function applyGuessResult(rowIdx, guessStr) {
             for (let c = 0; c < WORD_LENGTH; c++) {
                 const tile = document.getElementById(`tile-${rowIdx}-${c}`);
                 const char = guessStr[c];
@@ -784,25 +828,53 @@
             }
         }
 
+        /* 文字入力のスマート分岐（自分のターンならボード、相手のターンなら下書き欄へ） */
         function inputChar(char) {
             if (!isGameStarted || isGameOver) return;
-            // if (playerOrder[turnIndex] !== peer.id) return; // 自分のターンでなければ入力不可
+            const isMyTurn = (playerOrder[turnIndex] === peer.id);
 
-            if (currentCol < WORD_LENGTH && currentRow < TOTAL_ROWS) {
-                boardState[currentRow][currentCol] = char;
-                document.getElementById(`tile-${currentRow}-${currentCol}`).innerText = char;
-                currentCol++;
+            if (isMyTurn) {
+                if (currentCol < WORD_LENGTH && currentRow < TOTAL_ROWS) {
+                    boardState[currentRow][currentCol] = char;
+                    document.getElementById(`tile-${currentRow}-${currentCol}`).innerText = char;
+                    currentCol++;
+                }
+            } else {
+                // 相手のターン中は下書き欄に入力
+                const emptyIdx = draftState.indexOf("");
+                if (emptyIdx !== -1) {
+                    draftState[emptyIdx] = char;
+                    updateDraftUI();
+                }
             }
         }
 
+        /* 文字削除のスマート分岐 */
         function deleteChar() {
             if (!isGameStarted || isGameOver) return;
-            // if (playerOrder[turnIndex] !== peer.id) return;
+            const isMyTurn = (playerOrder[turnIndex] === peer.id);
 
-            if (currentCol > 0) {
-                currentCol--;
-                boardState[currentRow][currentCol] = "";
-                document.getElementById(`tile-${currentRow}-${currentCol}`).innerText = "";
+            if (isMyTurn) {
+                if (currentCol > 0) {
+                    currentCol--;
+                    boardState[currentRow][currentCol] = "";
+                    document.getElementById(`tile-${currentRow}-${currentCol}`).innerText = "";
+                }
+            } else {
+                // 相手のターン中は下書き欄から削除
+                for (let i = WORD_LENGTH - 1; i >= 0; i--) {
+                    if (draftState[i] !== "") {
+                        draftState[i] = "";
+                        updateDraftUI();
+                        break;
+                    }
+                }
+            }
+        }
+
+        function updateDraftUI() {
+            for (let i = 0; i < WORD_LENGTH; i++) {
+                document.getElementById(`draft-${i}`).innerText = draftState[i];
             }
         }
 
