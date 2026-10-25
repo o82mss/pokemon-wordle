@@ -141,9 +141,9 @@
         .tile.present, .key.present { background-color: #c9b458 !important; color: white !important; border-color: #c9b458 !important; }
         .tile.absent, .key.absent { background-color: #787c7e !important; color: white !important; border-color: #787c7e !important; opacity: 0.6; }
 
-        /* 下書き欄 */
+        /* 下書き欄（常に表示） */
         #draft-container {
-            display: none;
+            display: none; /* ゲーム開始前は隠し、開始後に常に表示 */
             flex-direction: column;
             align-items: center;
             margin-bottom: 6px;
@@ -237,9 +237,9 @@
         <button class="btn" id="next-round-btn" onclick="startGame()" style="background-color:#28a745; display:none; margin-top:4px;">次の試合へ！</button>
     </div>
 
-    <!-- 下書き欄（待ち時間に入力可能） -->
+    <!-- 下書き欄（対戦中は常に表示） -->
     <div id="draft-container">
-        <div style="font-size: 0.75rem; color: #007bff; font-weight: bold; margin-bottom: 2px;" id="draft-label">✏️ 次の下書き（ターンが来たら決定できます）</div>
+        <div style="font-size: 0.75rem; color: #007bff; font-weight: bold; margin-bottom: 2px;" id="draft-label">✏️ 次の下書き（ターンに関わらず入力できます）</div>
         <div class="row" style="max-width: 200px;">
             <div class="tile draft-tile" id="draft-0"></div>
             <div class="tile draft-tile" id="draft-1"></div>
@@ -496,7 +496,7 @@
         let currentRow = 0;
         let currentCol = 0;
         let boardState = Array.from({ length: TOTAL_ROWS }, () => Array(WORD_LENGTH).fill(""));
-        let draftState = Array(WORD_LENGTH).fill(""); // 下書き用配列
+        let draftState = Array(WORD_LENGTH).fill("");
         let isGameStarted = false;
         let isGameOver = false;
 
@@ -676,7 +676,7 @@
 
             document.getElementById('lobby-area').style.display = 'none';
             document.getElementById('game-header').style.display = 'flex';
-            document.getElementById('draft-container').style.display = 'flex';
+            document.getElementById('draft-container').style.display = 'flex'; // ゲーム中は常に下書き欄を表示
             document.getElementById('next-round-btn').style.display = 'none';
             document.getElementById('message').innerText = "";
 
@@ -701,23 +701,11 @@
             } else if (isMyTurn) {
                 indicator.innerText = "👉 あなたのターンです！";
                 indicator.style.color = "#28a745";
-                draftContainer.style.display = 'none'; // 自分のターン時は下書きを非表示にしボードへ反映
-
-                // 自分のターンになった瞬間、もし下書きに文字があればボードへ自動反映
-                const draftWord = draftState.join("");
-                if (draftWord.length > 0) {
-                    for (let c = 0; c < WORD_LENGTH; c++) {
-                        boardState[currentRow][c] = draftState[c];
-                        document.getElementById(`tile-${currentRow}-${c}`).innerText = draftState[c];
-                    }
-                    currentCol = draftWord.length;
-                    draftState = Array(WORD_LENGTH).fill("");
-                    updateDraftUI();
-                }
+                draftContainer.style.display = 'flex'; // 常に表示を維持
             } else {
                 indicator.innerText = `⏳ ${currentTurnName} さんの思考中...`;
                 indicator.style.color = "#007bff";
-                draftContainer.style.display = 'flex'; // 相手のターン時は下書き可能に
+                draftContainer.style.display = 'flex'; // 常に表示を維持
             }
 
             const scoreBoard = document.getElementById('score-board');
@@ -739,6 +727,18 @@
             if (currentTurnPlayerId !== peer.id) {
                 document.getElementById("message").innerText = "今は相手のターンです！下書きに入力して待ちましょう。";
                 return;
+            }
+
+            // ボードが空で下書きに5文字入っていれば、決定時に自動で下書きをボードへ反映
+            const draftWord = draftState.join("");
+            if (currentCol === 0 && draftWord.length === WORD_LENGTH) {
+                for (let c = 0; c < WORD_LENGTH; c++) {
+                    boardState[currentRow][c] = draftState[c];
+                    document.getElementById(`tile-${currentRow}-${c}`).innerText = draftState[c];
+                }
+                currentCol = WORD_LENGTH;
+                draftState = Array(WORD_LENGTH).fill("");
+                updateDraftUI();
             }
 
             if (currentCol < WORD_LENGTH) {
@@ -828,46 +828,26 @@
             }
         }
 
-        /* 文字入力のスマート分岐（自分のターンならボード、相手のターンなら下書き欄へ） */
+        /* 常に下書き欄（draftState）に入力する仕組み */
         function inputChar(char) {
             if (!isGameStarted || isGameOver) return;
-            const isMyTurn = (playerOrder[turnIndex] === peer.id);
-
-            if (isMyTurn) {
-                if (currentCol < WORD_LENGTH && currentRow < TOTAL_ROWS) {
-                    boardState[currentRow][currentCol] = char;
-                    document.getElementById(`tile-${currentRow}-${currentCol}`).innerText = char;
-                    currentCol++;
-                }
-            } else {
-                // 相手のターン中は下書き欄に入力
-                const emptyIdx = draftState.indexOf("");
-                if (emptyIdx !== -1) {
-                    draftState[emptyIdx] = char;
-                    updateDraftUI();
-                }
+            
+            const emptyIdx = draftState.indexOf("");
+            if (emptyIdx !== -1) {
+                draftState[emptyIdx] = char;
+                updateDraftUI();
             }
         }
 
-        /* 文字削除のスマート分岐 */
+        /* 常に下書き欄（draftState）から削除する仕組み */
         function deleteChar() {
             if (!isGameStarted || isGameOver) return;
-            const isMyTurn = (playerOrder[turnIndex] === peer.id);
-
-            if (isMyTurn) {
-                if (currentCol > 0) {
-                    currentCol--;
-                    boardState[currentRow][currentCol] = "";
-                    document.getElementById(`tile-${currentRow}-${currentCol}`).innerText = "";
-                }
-            } else {
-                // 相手のターン中は下書き欄から削除
-                for (let i = WORD_LENGTH - 1; i >= 0; i--) {
-                    if (draftState[i] !== "") {
-                        draftState[i] = "";
-                        updateDraftUI();
-                        break;
-                    }
+            
+            for (let i = WORD_LENGTH - 1; i >= 0; i--) {
+                if (draftState[i] !== "") {
+                    draftState[i] = "";
+                    updateDraftUI();
+                    break;
                 }
             }
         }
