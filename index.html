@@ -747,6 +747,10 @@
 
             const draftWord = draftState.join("");
             if (currentCol === 0 && draftWord.length === WORD_LENGTH) {
+                if (!POKEMON_LIST.includes(draftWord)) {
+                    document.getElementById("message").innerText = "リストにないポケモンです！";
+                    return; // リストにない場合はここで処理をストップ（行を進めない）
+                }
                 for (let c = 0; c < WORD_LENGTH; c++) {
                     boardState[currentRow][c] = draftState[c];
                     document.getElementById(`tile-${currentRow}-${c}`).innerText = draftState[c];
@@ -763,10 +767,10 @@
 
             const guess = boardState[currentRow].join("");
 
-            if (!POKEMON_LIST.includes(guess)) {
-                document.getElementById("message").innerText = "リストにないポケモンです！";
-                return;
-            }
+            // if (!POKEMON_LIST.includes(guess)) {
+            //     document.getElementById("message").innerText = "リストにないポケモンです！";
+            //     return;
+            // }
 
             document.getElementById("message").innerText = "";
 
